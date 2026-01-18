@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal Builder - Pnyxhill</title>
+    <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <img src="logo.avif" alt="Pnyxhill Logo" class="logo-image">
+            
+            <div class="header-text-container">
+                <h1>Proposal Builder</h1>
+                <span class="header-subtitle">AI Powered Document Generation</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="upload-section">
+                    <h2 class="section-title">Discovery Document</h2>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <div class="upload-text">Drop your Excel file here</div>
+                        <div class="upload-subtext">or click to browse</div>
+                        <input type="file" class="file-input" id="fileInput" accept=".xlsx,.xls">
+                    </div>
+
+                    <div id="fileStatus" style="margin-top: 16px;"></div>
+                </div>
+
+                <div class="edit-section">
+                    <h2 class="section-title">Proposal Refinements</h2>
+                    
+                    <div id="statusMessages"></div>
+                    
+                    <textarea 
+                        class="edit-textarea" 
+                        id="editTextarea"
+                        placeholder="After generating the initial proposal, describe any changes you'd like to make here..."
+                        disabled
+                    ></textarea>
+                    
+                    <div class="edit-actions">
+                        <button class="btn btn-primary" id="generateBtn" disabled>
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                            </svg>
+                            Generate Proposal
+                        </button>
+                        <button class="btn btn-secondary" id="applyChangesBtn" disabled>
+                            Apply Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-panel">
+                <div class="preview-container">
+                    <div class="preview-header">
+                        <h2 class="preview-title">Presentation Preview</h2>
+                        <div class="preview-actions">
+                            <button class="btn btn-secondary" id="downloadBtn" disabled>
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Download PPT
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="preview-workspace" id="previewWorkspace">
+                        <div class="main-slide-viewer" id="mainSlideViewer">
+                            <div class="viewer-placeholder">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                <p>Select a slide to view it here</p>
+                            </div>
+                        </div>
+                        <div class="slides-grid-container" id="slidesGridContainer">
+                            <div class="slides-grid" id="slidesGrid">
+                                </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    <script src="script2.js"></script>
+</body>
+</html>

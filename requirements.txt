@@ -1,0 +1,60 @@
+# fastapi
+# uvicorn
+# python-multipart
+# python-pptx
+# Pillow
+# pandas
+# openpyxl
+# aiofiles
+
+
+python-multipart
+python-pptx
+Pillow
+pandas
+openpyxl
+aiofiles
+pdf2image
+comtypes
+pywin32
+fastapi
+uvicorn[standard]
+python-dotenv
+google-generativeai
+
+# Core Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# PowerPoint Processing
+python-pptx==0.6.23
+
+# Excel Processing
+pandas==2.1.3
+openpyxl==3.1.2
+
+# AI Integration
+google-generativeai==0.3.2
+python-dotenv==1.0.0
+
+# Image Processing
+Pillow==10.1.0
+
+# Advanced PowerPoint Conversion (Optional but recommended)
+# Choose based on your OS:
+
+# For Windows users (best quality on Windows):
+# pywin32==306  # Uncomment for Windows COM automation
+
+# For cross-platform PDF conversion:
+pdf2image==1.16.3  # Requires poppler-utils installed
+# PyMuPDF==1.23.8  # Alternative PDF processor
+
+# For LibreOffice conversion (install LibreOffice separately):
+# unoconv dependency - LibreOffice must be installed
+
+# Optional but recommended
+pydantic==2.5.0
+typing-extensions==4.8.0
+reportlab==4.0.7  # For PDF generation

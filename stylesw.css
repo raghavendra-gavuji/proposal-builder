@@ -1,0 +1,493 @@
+/* CSS Variables for Pnyxhill Brand */
+:root {
+    --primary-dark: #0b0b0b;
+    --primary-blue: #001332;
+    --primary-text: #1a1a1a;
+    --secondary-text: #666666;
+    --light-gray: #f8f9fa;
+    --border-gray: #e5e5e5;
+    --white: #ffffff;
+    --gold-accent: #d4af37;
+    --gold-hover: #f4d03f;
+    --gold-light: rgba(212, 175, 55, 0.1);
+    --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-gold: 0 4px 20px rgba(212, 175, 55, 0.3);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+    color: var(--primary-text);
+    background-color: #fafbfc;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Container and Layout */
+.app-container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Header */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
+    border-bottom: 5px solid var(--gold-accent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    padding: 0 60px;
+    z-index: 1000;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.logo-image {
+    height: 42px;
+}
+
+.header-text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.5px;
+    margin: 0;
+    text-transform: uppercase;
+    background: linear-gradient(to right, 
+        rgb(160,129,66),
+        rgb(201,180,144), 
+        rgb(240,210,149), 
+        rgb(231,191,108),  
+        rgb(124,84,41), 
+        rgb(160,129,66)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+/* Main Content Area */
+.main-content {
+    display: flex;
+    width: 100%;
+    margin-top: 80px;
+    height: calc(100vh - 80px);
+}
+
+/* Left Panel - Controls */
+.controls-panel {
+    width: 420px;
+    background: var(--white);
+    border-right: 1px solid var(--border-gray);
+    padding: 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 24px;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-title::before {
+    content: '';
+    width: 4px;
+    height: 20px;
+    background: var(--gold-accent);
+    border-radius: 2px;
+}
+
+/* Upload Section */
+.upload-section {
+    margin-bottom: 40px;
+}
+
+.upload-area {
+    border: 2px dashed var(--border-gray);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    background: var(--light-gray);
+}
+
+.upload-area:hover,
+.upload-area.active {
+    border-color: var(--gold-accent);
+    background: rgba(212, 175, 55, 0.05);
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    opacity: 0.4;
+}
+
+.upload-text {
+    font-size: 16px;
+    color: var(--primary-text);
+    margin-bottom: 8px;
+}
+
+.upload-subtext {
+    font-size: 14px;
+    color: var(--secondary-text);
+}
+
+.file-input {
+    display: none;
+}
+
+/* Button Styles */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background: var(--gold-accent);
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: var(--gold-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-gold);
+}
+
+.btn-primary:disabled {
+    background: var(--border-gray);
+    color: var(--secondary-text);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: var(--primary-dark);
+    color: var(--white);
+    border: 1px solid var(--primary-dark);
+}
+
+.btn-secondary:hover {
+    background: transparent;
+    color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+/* Edit Section */
+.edit-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 16px;
+    border: 1px solid var(--border-gray);
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    transition: var(--transition);
+    background: var(--light-gray);
+}
+
+.edit-textarea:focus {
+    outline: none;
+    border-color: var(--gold-accent);
+    background: var(--white);
+}
+
+.edit-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* Status Messages */
+.status-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-success {
+    background: rgba(52, 168, 83, 0.1);
+    color: #34a853;
+    border: 1px solid rgba(52, 168, 83, 0.2);
+}
+
+.status-info {
+    background: rgba(66, 133, 244, 0.1);
+    color: #4285f4;
+    border: 1px solid rgba(66, 133, 244, 0.2);
+}
+
+.status-error {
+    background: rgba(234, 67, 53, 0.1);
+    color: #ea4335;
+    border: 1px solid rgba(234, 67, 53, 0.2);
+}
+
+/* Right Panel - Preview */
+.preview-panel {
+    flex: 1;
+    background: linear-gradient(135deg, #f5f6f7 0%, #e9ebee 100%);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.preview-container {
+    max-width: 1600px; /* UPDATED: Increased max-width */
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-shrink: 0;
+}
+
+.preview-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+/* Presenter View Workspace */
+.preview-workspace {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+}
+
+.main-slide-viewer {
+    display: none; /* Hidden by default */
+    flex: 4; /* UPDATED: Changed flex ratio to prioritize this viewer */
+    background: #e9ebee;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+    min-width: 0;
+}
+
+.viewer-placeholder {
+    text-align: center;
+    color: var(--secondary-text);
+}
+
+.viewer-placeholder svg {
+    opacity: 0.5;
+}
+
+.main-slide-viewer img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: var(--shadow-medium);
+}
+
+.slides-grid-container {
+    flex: 1 1 100%; /* Takes full width initially */
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.slides-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* --- Active Presenter View State --- */
+.preview-workspace.presenter-view-active .main-slide-viewer {
+    display: flex; /* Show the main viewer */
+}
+
+.preview-workspace.presenter-view-active .slides-grid-container {
+    flex: 1;
+    max-width: 320px;
+    min-width: 280px;
+}
+
+.preview-workspace.presenter-view-active .slides-grid {
+    grid-template-columns: 1fr; /* Single column for thumbnails */
+}
+
+/* Slide Card Styles */
+.slide-card {
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-light);
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    
+}
+
+.slide-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-medium);
+}
+
+.slide-card.active {
+    /* border-left: var(--gold-accent) 3px solid; */
+    box-shadow: 0 0 0 3px var(--gold-accent), var(--shadow-medium);
+    transform: none;
+}
+
+.slide-number {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: var(--gold-accent);
+    color: var(--primary-dark);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 10;
+}
+
+.slide-content {
+    aspect-ratio: 16 / 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+    background: #f0f2f5;
+}
+
+.slide-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.slide-placeholder {
+    text-align: center;
+    color: var(--secondary-text);
+    padding: 20px;
+}
+
+.slide-placeholder h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--primary-text);
+}
+
+.slide-placeholder p {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Icons and Loaders */
+.icon {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-top-color: var(--primary-dark);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Scrollbar styling */
+.slides-grid-container::-webkit-scrollbar {
+    width: 8px;
+}
+.slides-grid-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.slides-grid-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+.slides-grid-container::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
