@@ -267,7 +267,6 @@ class GeminiContentGenerator:
         # Prepare the prompt
         prompt = self._create_prompt(placeholders, discovery_data)
         
-        # Try multiple times with exponential backoff
         for attempt in range(self.max_retries):
             try:
                 print(f"🤖 Attempting Gemini API call (attempt {attempt + 1}/{self.max_retries})...")
@@ -404,7 +403,7 @@ class PPTXProcessor:
                     found_placeholders = re.findall(r'\{\{([^}]+)\}\}', text)
                     slide_placeholders.extend(found_placeholders)
             
-            if slide_placeholders:
+            if slide_placeholders: 
                 placeholders[f"slide_{slide_idx}"] = list(set(slide_placeholders))  # Remove duplicates
         
         return placeholders
