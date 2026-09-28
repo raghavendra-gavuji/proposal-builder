@@ -1,41 +1,164 @@
 """
 Hindsight Memory Manager for Proposal Builder
-Manages persistent memory of proposals, refinements, and user preferences
+Manages persistent memory of proposals, refinements, and user preferences via HTTP API
+
+NOTE: This module uses the Hindsight HTTP API (REST-based).
+If Hindsight is not available, the app continues to work normally.
 """
 
 import json
+import httpx
+import os
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from hindsight import Hindsight, MemoryBank
 
-# Initialize Hindsight client
-# For hackathon: assumes local Hindsight server running on default port
-hindsight_client = None
+# Hindsight API client using HTTP
+class HindsightClient:
+    """Client for Hindsight HTTP API"""
+    
+    def __init__(self, base_url: str, api_key: Optional[str] = None):
+        self.base_url = base_url.rstrip('/')
+        self.api_key = api_key
+        self.client = httpx.Client(timeout=30.0)
+    
+    def _headers(self) -> Dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
+    
+    def health_check(self) -> bool:
+        """Check if Hindsight API is available"""
+        try:
+            response = self.client.get(f"{self.base_url}/health")
+            return response.status_code == 200
+        except Exception:
+            return False
+    
+    def create_bank(self, bank_id: str, mission: str, directives: List[str]) -> bool:
+        """Create or get a memory bank"""
+        try:
+            payload = {
+                "name": bank_id,
+                "mission": mission,
+                "directives": [{"text": d, "severity": "high"} for d in directives],
+                "description": "Proposal Builder Memory Bank"
+            }
+            response = self.client.post(
+                f"{self.base_url}/v1/default/banks",
+                json=payload,
+                headers=self._headers()
+            )
+            return response.status_code in [200, 201, 409]  # 409 = already exists
+        except Exception as e:
+            print(f"Error creating bank: {e}")
+            return False
+    
+    def retain(self, bank_id: str, content: str, source: str = "proposal", metadata: Optional[Dict] = None) -> bool:
+        """Store a fact in memory"""
+        try:
+            payload = {
+                "content": content,
+                "source_document_id": source,
+                "tagged": metadata or {}
+            }
+            response = self.client.post(
+                f"{self.base_url}/v1/default/banks/{bank_id}/memories",
+                json=payload,
+                headers=self._headers()
+            )
+            return response.status_code in [200, 201]
+        except Exception as e:
+            print(f"Error retaining memory: {e}")
+            return False
+    
+    def recall(self, bank_id: str, query: str, limit: int = 3) -> List[Dict[str, Any]]:
+        """Search memory for relevant facts"""
+        try:
+            payload = {
+                "query": query,
+                "limit": limit
+            }
+            response = self.client.post(
+                f"{self.base_url}/v1/default/banks/{bank_id}/memories/recall",
+                json=payload,
+                headers=self._headers()
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("results", [])
+            return []
+        except Exception as e:
+            print(f"Error recalling memory: {e}")
+            return []
+    
+    def reflect(self, bank_id: str, query: str) -> str:
+        """Get consolidated answer based on memory"""
+        try:
+            payload = {"query": query}
+            response = self.client.post(
+                f"{self.base_url}/v1/default/banks/{bank_id}/reflect",
+                json=payload,
+                headers=self._headers()
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("content", "")
+            return ""
+        except Exception as e:
+            print(f"Error in reflect: {e}")
+            return ""
+
+# Global client
+hindsight_client: Optional[HindsightClient] = None
+HINDSIGHT_AVAILABLE = False
 
 
-def initialize_hindsight(api_key: str = None, base_url: str = "http://localhost:8090") -> Hindsight:
+def initialize_hindsight(
+    base_url: Optional[str] = None, 
+    api_key: Optional[str] = None
+) -> Optional[HindsightClient]:
     """
-    Initialize Hindsight client
-    For hackathon deployment, uses local server by default
+    Initialize Hindsight HTTP API client
+    
+    Args:
+        base_url: Hindsight API URL (default: localhost:8090 or env var HINDSIGHT_URL)
+        api_key: API key for cloud deployment (default: env var HINDSIGHT_API_KEY)
+    
+    Returns:
+        HindsightClient instance or None if unavailable
     """
-    global hindsight_client
+    global hindsight_client, HINDSIGHT_AVAILABLE
+    
+    # Get config from environment or parameters
+    base_url = base_url or os.getenv("HINDSIGHT_URL", "http://localhost:8090")
+    api_key = api_key or os.getenv("HINDSIGHT_API_KEY")
+    
     try:
-        if api_key:
-            hindsight_client = Hindsight(api_key=api_key, base_url=base_url)
+        client = HindsightClient(base_url, api_key)
+        
+        # Test connection
+        if client.health_check():
+            hindsight_client = client
+            HINDSIGHT_AVAILABLE = True
+            print("✅ Hindsight HTTP API connected successfully")
+            print(f"   Base URL: {base_url}")
+            return client
         else:
-            # Local deployment - no API key required
-            hindsight_client = Hindsight(base_url=base_url)
-        print("✅ Hindsight initialized successfully")
-        return hindsight_client
+            print("⚠️  Hindsight API not responding")
+            print(f"   Tried: {base_url}")
+            print("   App will continue without memory features")
+            return None
     except Exception as e:
-        print(f"⚠️  Hindsight initialization failed: {e}")
-        print("💡 Make sure Hindsight server is running locally or provide API credentials")
-        hindsight_client = None
+        print(f"⚠️  Hindsight connection failed: {e}")
+        print("💡 Ensure Hindsight server is running at:", base_url)
+        print("   Or set HINDSIGHT_URL and HINDSIGHT_API_KEY environment variables")
+        print("   App will continue without memory features")
         return None
 
 
 class HindsightManager:
-    """Manage Hindsight memory operations for proposal builder"""
+    """Manage Hindsight memory operations for proposal builder via HTTP API"""
     
     MEMORY_BANK_NAME = "proposal_builder"
     MISSION = """
@@ -48,10 +171,173 @@ class HindsightManager:
     
     DIRECTIVES = [
         "Always cite or reference relevant past proposal patterns when available",
-        "Never generate generic or one-size-fits-all content - personalize based on discovered preferences",
+        "Never generate generic content; personalize based on preferences",
         "Maintain consistency across proposal sections",
-        "Preserve user refinement choices as strong signals for future proposals"
+        "Preserve user refinement choices as strong signals"
     ]
+    
+    def __init__(self, client: Optional[HindsightClient] = None):
+        """Initialize with Hindsight HTTP client"""
+        self.client = client or hindsight_client
+        self.bank_id = None
+        
+        if self.client:
+            self._setup_memory_bank()
+    
+    def _setup_memory_bank(self):
+        """Create or get the memory bank for proposal builder"""
+        try:
+            # Create bank if not exists
+            if self.client.create_bank(self.MEMORY_BANK_NAME, self.MISSION, self.DIRECTIVES):
+                self.bank_id = self.MEMORY_BANK_NAME
+                print(f"✅ Memory bank '{self.MEMORY_BANK_NAME}' ready")
+            else:
+                print(f"⚠️  Could not set up memory bank")
+        except Exception as e:
+            print(f"⚠️  Error setting up memory bank: {e}")
+    
+    def retain_proposal(self, proposal_data: Dict[str, Any]) -> bool:
+        """Retain a generated proposal in memory"""
+        if not self.client or not self.bank_id:
+            return False
+        
+        try:
+            proposal_id = proposal_data.get("proposal_id", "unknown")
+            discovery_data = proposal_data.get("discovery_data", {})
+            generated_content = proposal_data.get("generated_content", {})
+            
+            summary = self._create_proposal_summary(discovery_data, generated_content)
+            
+            return self.client.retain(
+                self.bank_id,
+                summary,
+                source=f"proposal_{proposal_id}",
+                metadata={
+                    "type": "proposal",
+                    "proposal_id": proposal_id,
+                    "industry": discovery_data.get("industry", "unknown"),
+                    "client": discovery_data.get("client_name", "unknown"),
+                    "created_at": proposal_data.get("created_at", datetime.now().isoformat())
+                }
+            )
+        except Exception as e:
+            print(f"⚠️  Error retaining proposal: {e}")
+            return False
+    
+    def retain_refinements(self, proposal_id: str, refinements: str, original_content: Dict[str, Any]) -> bool:
+        """Retain user refinements as feedback"""
+        if not self.client or not self.bank_id:
+            return False
+        
+        try:
+            feedback_summary = f"User Refinement: {refinements}"
+            
+            return self.client.retain(
+                self.bank_id,
+                feedback_summary,
+                source=f"refinement_{proposal_id}",
+                metadata={"type": "user_feedback", "proposal_id": proposal_id}
+            )
+        except Exception as e:
+            print(f"⚠️  Error retaining refinements: {e}")
+            return False
+    
+    def recall_similar_proposals(self, discovery_data: Dict[str, Any], limit: int = 3) -> List[Dict[str, Any]]:
+        """Recall similar past proposals"""
+        if not self.client or not self.bank_id:
+            return []
+        
+        try:
+            query = self._build_recall_query(discovery_data)
+            memories = self.client.recall(self.bank_id, query, limit)
+            
+            if memories:
+                print(f"✅ Recalled {len(memories)} similar proposals")
+                return memories
+            return []
+        except Exception as e:
+            print(f"⚠️  Error recalling proposals: {e}")
+            return []
+    
+    def recall_user_preferences(self, limit: int = 5) -> List[Dict[str, Any]]:
+        """Recall user preferences from past refinements"""
+        if not self.client or not self.bank_id:
+            return []
+        
+        try:
+            query = "user preferences refinement style feedback"
+            memories = self.client.recall(self.bank_id, query, limit)
+            
+            if memories:
+                print(f"✅ Recalled {len(memories)} user preference patterns")
+                return memories
+            return []
+        except Exception as e:
+            print(f"⚠️  Error recalling preferences: {e}")
+            return []
+    
+    def reflect_for_generation(self, discovery_data: Dict[str, Any]) -> str:
+        """Get consolidated context for proposal generation"""
+        if not self.client or not self.bank_id:
+            return ""
+        
+        try:
+            query = f"""
+            Based on past proposals:
+            - Industry: {discovery_data.get('industry', 'unknown')}
+            - Client: {discovery_data.get('client_name', 'unknown')}
+            
+            What patterns worked well? What did users prefer to change?
+            """
+            
+            reflection = self.client.reflect(self.bank_id, query)
+            
+            if reflection:
+                print(f"✅ Generated reflections")
+                return reflection
+            return ""
+        except Exception as e:
+            print(f"⚠️  Error in reflect: {e}")
+            return ""
+    
+    def _create_proposal_summary(self, discovery_data: Dict[str, Any], generated_content: Dict[str, Any]) -> str:
+        """Create a text summary of a proposal"""
+        summary = f"""
+Proposal Summary:
+- Client: {discovery_data.get('client_name', 'Unknown')}
+- Industry: {discovery_data.get('industry', 'Unknown')}
+- Scope: {discovery_data.get('project_scope', 'Unspecified')}
+        """
+        return summary
+    
+    def _build_recall_query(self, discovery_data: Dict[str, Any]) -> str:
+        """Build a search query from discovery data"""
+        industry = discovery_data.get("industry", "")
+        client_type = discovery_data.get("client_type", "")
+        scope = discovery_data.get("project_scope", "")
+        
+        return f"{industry} {client_type} {scope} proposal".strip()
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get current status"""
+        return {
+            "connected": self.client is not None and HINDSIGHT_AVAILABLE,
+            "memory_bank_ready": self.bank_id is not None,
+            "bank_name": self.bank_id
+        }
+
+
+# Singleton instance
+_manager = None
+
+
+def get_hindsight_manager() -> HindsightManager:
+    """Get or initialize the global Hindsight manager"""
+    global _manager
+    if _manager is None:
+        client = initialize_hindsight()
+        _manager = HindsightManager(client)
+    return _manager
     
     def __init__(self, client: Optional[Hindsight] = None):
         """Initialize with Hindsight client"""
