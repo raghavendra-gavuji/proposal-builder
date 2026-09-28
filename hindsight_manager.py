@@ -160,7 +160,7 @@ def initialize_hindsight(
 class HindsightManager:
     """Manage Hindsight memory operations for proposal builder via HTTP API"""
     
-    MEMORY_BANK_NAME = "proposal_builder"
+    MEMORY_BANK_NAME = "sah"
     MISSION = """
     I am a Proposal Builder AI Assistant. My purpose is to generate professional, 
     compelling business proposals that are customized to each client's needs. 
