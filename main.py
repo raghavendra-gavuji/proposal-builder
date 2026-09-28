@@ -30,6 +30,7 @@ import google.generativeai as genai
 import traceback
 from openpyxl import load_workbook
 from contextlib import asynccontextmanager
+from hindsight_manager import get_hindsight_manager, HindsightManager
 
 # Configuration
 GEMINI_API_KEY = "AIzaSyCQ5IbXH0WnqBdaoEBY-o5w87OgDZ3V5NU"
@@ -38,6 +39,9 @@ GEMINI_API_KEY = "AIzaSyCQ5IbXH0WnqBdaoEBY-o5w87OgDZ3V5NU"
 proposals = {}
 image_cache = {}
 conversion_status = {}  # Track conversion progress
+
+# Initialize Hindsight for memory
+hindsight_manager = None
 
 # Initialize Gemini configuration
 genai.configure(api_key=GEMINI_API_KEY)
@@ -51,6 +55,16 @@ async def lifespan(app: FastAPI):
     print("\n" + "="*60)
     print("🚀 Server Starting Up...")
     print("="*60)
+    
+    # Initialize Hindsight memory system
+    global hindsight_manager
+    hindsight_manager = get_hindsight_manager()
+    status = hindsight_manager.get_status()
+    if status["connected"]:
+        print("✅ Hindsight Memory System Initialized")
+        print(f"   Memory Bank: {status['bank_name']}")
+    else:
+        print("⚠️  Hindsight not available (optional)")
     
     # Generate template images on startup
     generate_template_images_on_startup()
@@ -261,11 +275,11 @@ class GeminiContentGenerator:
                      - {{Points for Service Deliverables 4}}: 3-4 action-oriented bullet points."""
         }    
 
-    def generate_content(self, placeholders: Dict[str, List[str]], discovery_data: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_content(self, placeholders: Dict[str, List[str]], discovery_data: Dict[str, Any], hindsight_context: str = "") -> Dict[str, Any]:
         """Generate content for all placeholders based on discovery document with retry logic"""
         
         # Prepare the prompt
-        prompt = self._create_prompt(placeholders, discovery_data)
+        prompt = self._create_prompt(placeholders, discovery_data, hindsight_context)
         
         for attempt in range(self.max_retries):
             try:
@@ -297,7 +311,7 @@ class GeminiContentGenerator:
         # If all retries fail, return default content
         return self._get_default_content(placeholders)
     
-    def _create_prompt(self, placeholders: Dict[str, List[str]], discovery_data: Dict[str, Any]) -> str:
+    def _create_prompt(self, placeholders: Dict[str, List[str]], discovery_data: Dict[str, Any], hindsight_context: str = "") -> str:
         """Create a detailed prompt for Gemini"""
         
         discovery_text = json.dumps(discovery_data, indent=2)
@@ -320,11 +334,22 @@ class GeminiContentGenerator:
             for ph in slide_placeholders:
                 slides_context += f"  - {ph}\n"
         
+        # Add hindsight context if available
+        hindsight_section = ""
+        if hindsight_context.strip():
+            hindsight_section = f"""
+**RELEVANT PAST PROPOSALS & PATTERNS (from memory):**
+{hindsight_context}
+
+Consider these patterns and user preferences when generating content. Apply similar successful approaches where applicable.
+"""
+        
         prompt = f"""
 You are a Senior Strategy Consultant at 'Pnyx Hill'. You are writing a business proposal.
 
 **INPUT DATA (Discovery Document):**
 {discovery_text}
+{hindsight_section}
 
 **INSTRUCTIONS:**
 1. Analyze the **GUIDELINES** for each slide below carefully.
@@ -772,9 +797,27 @@ async def create_proposal(discovery_doc: UploadFile = File(...)):
         
         print(f"Found {sum(len(p) for p in placeholders.values())} placeholders across {len(placeholders)} slides")
         
-        # Generate content using Gemini
+        # Recall similar proposals from Hindsight memory
+        hindsight_context = ""
+        if hindsight_manager:
+            print("\n🧠 Querying memory for similar proposals...")
+            similar_proposals = hindsight_manager.recall_similar_proposals(discovery_data, limit=3)
+            user_prefs = hindsight_manager.recall_user_preferences(limit=2)
+            
+            if similar_proposals or user_prefs:
+                hindsight_context = "Similar past proposals:\n"
+                for prop in similar_proposals:
+                    hindsight_context += f"  - {prop}\n"
+                
+                if user_prefs:
+                    hindsight_context += "\nUser preferences from past refinements:\n"
+                    for pref in user_prefs:
+                        hindsight_context += f"  - {pref}\n"
+                print(f"✅ Found relevant memory context")
+        
+        # Generate content using Gemini with Hindsight context
         content_generator = GeminiContentGenerator()
-        generated_content = content_generator.generate_content(placeholders, discovery_data)
+        generated_content = content_generator.generate_content(placeholders, discovery_data, hindsight_context)
         
         # Replace placeholders with generated content
         proposal_processor.replace_placeholders(generated_content)
@@ -801,6 +844,15 @@ async def create_proposal(discovery_doc: UploadFile = File(...)):
             "status": "created",
             "created_at": datetime.now().isoformat()
         }
+        
+        # Retain the proposal in Hindsight memory
+        if hindsight_manager:
+            hindsight_manager.retain_proposal({
+                "proposal_id": proposal_id,
+                "discovery_data": discovery_data,
+                "generated_content": generated_content,
+                "created_at": datetime.now().isoformat()
+            })
         
         return {
             "status": "success",
@@ -925,6 +977,14 @@ async def update_proposal(proposal_id: str, update_request: UpdateRequest):
             'changes_requested': update_request.changes,
             'content_updated': updated_content
         })
+        
+        # Retain the refinements in Hindsight memory
+        if hindsight_manager:
+            hindsight_manager.retain_refinements(
+                proposal_id=proposal_id,
+                refinements=update_request.changes,
+                original_content=proposal.get('generated_content', {})
+            )
         
         return {
             "status": "success",
